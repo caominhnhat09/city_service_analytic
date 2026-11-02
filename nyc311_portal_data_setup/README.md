@@ -28,14 +28,6 @@ python scripts/verify_dataset.py
 # copy the measured values into DATA_SOURCE.md
 ```
 
-## Hand-off to the other team members
-
-- Parser/indexing: read `config/dataset_config.json` for the CSV path and column names.
-  Portal headers may use either backend names (`complaint_type`) or labels ("Problem");
-  `verify_dataset.py` shows how to map both.
-- Analytics/plots: use only the frozen CSV; never re-download during analysis (offline requirement).
-- Validation/documentation: `dataset_manifest.json` gives the verified row count and SHA-256 as a starting cross-check. The data-quality report (duplicate IDs, malformed timestamps, open/closed/missing status) is NOT produced here; it is built by the parser/validation parts.
-
 
 ## Rules the team must follow
 
