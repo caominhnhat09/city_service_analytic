@@ -27,7 +27,7 @@ The dataset has tens of millions of rows, so the team uses a small, reproducible
 | Created Date, start (inclusive) | 2026-07-01 00:00:00 |
 | Created Date, end (exclusive) | 2026-08-01 00:00:00 |
 | Borough | BROOKLYN |
-| Row limit requested | 500000 (must be higher than the real row count; see section 4) |
+| Row limit requested | 500000 |
 
 Equivalent SoQL filter:
 
