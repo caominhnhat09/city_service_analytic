@@ -1,0 +1,3 @@
+# Python 3.11+ is required (checked by scripts/check_environment.py)
+numpy
+matplotlib

@@ -1,0 +1,16 @@
+{
+  "_comment": "Single source of truth for the team dataset. Edit the values below ONLY if the team agrees on a different slice, then re-export and update DATA_SOURCE.md.",
+  "dataset_name": "311 Service Requests from 2020 to Present",
+  "dataset_id": "erm2-nwe9",
+  "portal_url": "https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2020-to-Present/erm2-nwe9/about_data",
+  "api_base_url": "https://data.cityofnewyork.us/resource/erm2-nwe9.csv",
+  "filters": {
+    "created_date_start_inclusive": "2026-07-01T00:00:00",
+    "created_date_end_exclusive": "2026-08-01T00:00:00",
+    "borough": "BROOKLYN"
+  },
+  "max_rows_requested": 500000,
+  "csv_path": "data/raw/nyc311_brooklyn_2026-07.csv",
+  "required_columns": ["unique_key", "created_date", "closed_date", "agency", "complaint_type", "status", "borough"],
+  "optional_columns": ["agency_name", "descriptor", "community_board", "city"]
+}
