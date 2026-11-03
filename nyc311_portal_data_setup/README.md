@@ -23,7 +23,7 @@ reproducible dataset and the environment for team to build on.
 pip install -r requirements.txt
 python scripts/check_environment.py
 python scripts/build_export_url.py        # or follow docs/PORTAL_FILTER_STEPS.md
-# download the CSV into data/ and add the screenshot / filter description to provenance/
+# download the CSV into data/ and add the screenshot or filter description to provenance/
 python scripts/verify_dataset.py
 # copy the measured values into DATA_SOURCE.md
 ```

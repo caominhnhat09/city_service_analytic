@@ -1,8 +1,8 @@
 {
-  "verified_at": "2026-11-03T12:30:00",
+  "verified_at": "2026-11-03T13:25:15",
   "csv_file": "nyc311_brooklyn_2026-07.csv",
-  "csv_size_bytes": 85127855,
-  "csv_sha256": "018f1ac57ad96a78e577830bc84adc154acc453d6dede1c33b0aac208e104434",
+  "csv_size_bytes": 92395472,
+  "csv_sha256": "4c4315d82374149b750cd17d586210731426bd5252810aefc405420aac39e2aa",
   "dataset_id": "erm2-nwe9",
   "filters": {
     "created_date_start_inclusive": "2026-07-01T00:00:00",
