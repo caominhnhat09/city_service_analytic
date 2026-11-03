@@ -159,7 +159,7 @@ def main() -> int:
     print(f"Rows outside borough filter:  {manifest['rows_outside_borough']}")
     if manifest["rows_with_unreadable_created_date"]:
         print(f"Rows with unreadable Created Date (not date-checked): "
-              f"{manifest['rows_with_unreadable_created_date']}  <-- pass to the validation owner")
+              f"{manifest['rows_with_unreadable_created_date']}  <-- pass to the validation")
 
     problems = manifest["rows_outside_created_window"] or manifest["rows_outside_borough"]
     if problems:
@@ -167,7 +167,7 @@ def main() -> int:
 
     if DATA_SOURCE_PATH.is_file() and PLACEHOLDER in DATA_SOURCE_PATH.read_text(encoding="utf-8"):
         print(f"\n[WARN] DATA_SOURCE.md still contains {PLACEHOLDER} placeholders. "
-              "Fill them in with the values above (undocumented data is a major defect).")
+              "Fill them in with the values above.")
 
     print(f"\nManifest written to {MANIFEST_PATH.relative_to(ROOT)}")
     return 1 if problems else 0

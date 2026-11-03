@@ -10,7 +10,7 @@
     "borough": "BROOKLYN"
   },
   "max_rows_requested": 500000,
-  "csv_path": "data/raw/nyc311_brooklyn_2026-07.csv",
+  "csv_path": "data/nyc311_brooklyn_2026-07.csv",
   "required_columns": ["unique_key", "created_date", "closed_date", "agency", "complaint_type", "status", "borough"],
   "optional_columns": ["agency_name", "descriptor", "community_board", "city"]
 }

@@ -43,7 +43,7 @@ Team confirmation of the slice: [Quang, Nhật, Phú, Kiệt]
 
 - Method (portal UI filter + export, or API URL from `scripts/build_export_url.py`):[API URL from `scripts/build_export_url.py`]
 - Export date (UTC): [2026-11-02]
-- Saved as: `data/raw/nyc311_brooklyn_2025-01.csv`
+- Saved as: `data/nyc311_brooklyn_2025-01.csv`
 - Columns kept (all columns / subset): [all columns]
 - Provenance evidence (screenshot or saved filter description): `provenance/saved_filter_description`
 
@@ -54,7 +54,7 @@ Copy these from `provenance/dataset_manifest.json`.
 | Item | Value |
 |---|---|
 | Row count | [104867] |
-| SHA-256 of the CSV | [8575b3898197f97b1633261ed3d3233c86b82ce96cc7f0a797fac0cf9cb3be6e] |
+| SHA-256 of the CSV | [018f1ac57ad96a78e577830bc84adc154acc453d6dede1c33b0aac208e104434] |
 | Earliest Created Date in file | [2026-07-01T00:01:42] |
 | Latest Created Date in file | [2026-07-31T23:59:38] |
 | Rows outside the filters | [0] (should be 0) |
