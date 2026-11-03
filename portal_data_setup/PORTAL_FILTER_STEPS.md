@@ -15,13 +15,13 @@ The values below come from `config/dataset_config.json`.
 
 ## Option B: API URL
 
-1. Run `python scripts/build_export_url.py`.
+1. Run `scripts/build_export_url.py`.
 2. Open the printed URL in a browser (or use any download tool) and save the CSV as `data/nyc311_brooklyn_2026-07.csv`.
 3. Save the printed SoQL filter in `provenance/saved_filter_description.txt`
 
 ## After the export (both options)
 
-1. `python scripts/verify_dataset.py`
+1. Run `scripts/verify_dataset.py`
 2. Copy the values from `provenance/dataset_manifest.json` into `DATA_SOURCE.md`.
 3. Make sure no `[]` remains in `DATA_SOURCE.md`.
 4. Share the CSV and its SHA-256 with the team. Nobody should re-export without updating the hash.
