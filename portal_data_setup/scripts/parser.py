@@ -109,17 +109,15 @@ def main():
         print("\nSelect a column to filter by:")
         print("1. problem (complaint_type)")
         print("2. agency")
-        print("3. borough")
-        print("4. status")
+        print("3. status")
         
-        col_choice = input("Enter choice (1-4): ").strip()
+        col_choice = input("Enter choice (1-3): ").strip()
         
         # Map user choice to the corresponding object attribute
         attr_map = {
             '1': ('complaint_type', 'Problem / Complaint Type'),
             '2': ('agency', 'Agency'),
-            '3': ('borough', 'Borough'),
-            '4': ('status', 'Status')
+            '3': ('status', 'Status')
         }
         
         if col_choice in attr_map:
