@@ -1,14 +1,14 @@
 import csv
 import argparse
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # Default path for running directly from the IDE
 DEFAULT_FILEPATH = "portal_data_setup\\data\\nyc311_brooklyn_2026-07.csv"
 
 class ServiceRequest:
     """OOP representation of a single NYC 311 service request record."""
-    def __init__(self, row: dict):
+    def __init__(self, row: Dict[str, Optional[str]]):
         self.unique_key = row.get('unique_key')
         self.agency = row.get('agency')
         self.complaint_type = row.get('complaint_type')
@@ -25,7 +25,7 @@ class ServiceRequest:
         self.is_malformed_date = (self.created_dt is None and self.created_date_str) or \
                                  (self.closed_dt is None and self.closed_date_str)
 
-    def _parse_date(self, date_str: str):
+    def _parse_date(self, date_str: Optional[str]):
         if not date_str:
             return None
         try:
@@ -77,7 +77,7 @@ class RequestIndex:
                 else:
                     self.missing_status_count += 1
 
-    def filter_records(self, agency: str = None, problem_type: str = None) -> List[ServiceRequest]:
+    def filter_records(self, agency: Optional[str] = None, problem_type: Optional[str] = None) -> List[ServiceRequest]:
         """Filtering logic for CLI support[cite: 2]."""
         filtered = []
         for record in self.records.values():
