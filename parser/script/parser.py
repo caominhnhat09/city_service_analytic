@@ -1,0 +1,324 @@
+import argparse
+import csv
+import os
+import sys
+from collections import Counter
+from datetime import datetime
+from typing import Dict, List, Optional
+
+# Paths are resolved from this file's location, so the script works from any
+# working directory and on any OS.
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PARSER_DIR = os.path.dirname(SCRIPT_DIR)
+PROJECT_ROOT = os.path.dirname(PARSER_DIR)
+
+DEFAULT_FILEPATH = os.path.join(PROJECT_ROOT, "portal_data_setup", "data", "nyc311_brooklyn_2026-07.csv")
+
+# Output folder for cleaned data and quality report: parser/data
+OUTPUT_DIR = os.path.join(PARSER_DIR, "data")
+
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
+
+# Status grouping. Anything that is not Closed and not missing counts as open
+# (Open, In Progress, Assigned, Started, Pending, ...).
+CLOSED_STATUSES = {'Closed'}
+MISSING_STATUSES = {'', 'Unspecified'}
+
+
+class ServiceRequest:
+    """OOP representation of a single NYC 311 service request record."""
+    def __init__(self, row: Dict[str, Optional[str]]):
+        self.unique_key = (row.get('unique_key') or '').strip()
+        self.agency = row.get('agency')
+        self.complaint_type = row.get('complaint_type')
+        self.borough = row.get('borough')
+        self.status = (row.get('status') or '').strip()
+
+        self.created_date_str = row.get('created_date')
+        self.closed_date_str = row.get('closed_date')
+
+        self.created_dt = self._parse_date(self.created_date_str)
+        self.closed_dt = self._parse_date(self.closed_date_str)
+
+        # Timestamp quality checks
+        self.unparseable_date = bool(
+            (self.created_dt is None and self.created_date_str) or
+            (self.closed_dt is None and self.closed_date_str)
+        )
+        self.closed_before_created = bool(
+            self.created_dt and self.closed_dt and self.closed_dt < self.created_dt
+        )
+        self.closed_without_date = self.status in CLOSED_STATUSES and not self.closed_date_str
+
+        # Records with unusable timestamps are excluded from the clean export
+        self.is_malformed_date = self.unparseable_date or self.closed_before_created
+
+    @property
+    def status_group(self) -> str:
+        if self.status in MISSING_STATUSES:
+            return 'missing'
+        if self.status in CLOSED_STATUSES:
+            return 'closed'
+        return 'open'
+
+    @staticmethod
+    def _parse_date(date_str: Optional[str]) -> Optional[datetime]:
+        if not date_str:
+            return None
+        try:
+            # Matches the ISO 8601 format used in the dataset
+            return datetime.strptime(date_str, DATE_FORMAT)
+        except ValueError:
+            return None
+
+
+class RequestIndex:
+    """Handles CSV I/O, dictionary indexing, and reporting."""
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+        self.records: Dict[str, ServiceRequest] = {}
+
+        # Quality report trackers
+        self.duplicates: List[str] = []
+        self.missing_id_rows = 0
+        self.unparseable_dates: List[str] = []
+        self.closed_before_created: List[str] = []
+        self.closed_without_date: List[str] = []
+
+    def load_and_index(self):
+        """Reads the CSV file, indexes unique records, and logs quality issues."""
+        with open(self.filepath, mode='r', encoding='utf-8-sig') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                record = ServiceRequest(row)
+
+                if not record.unique_key:
+                    self.missing_id_rows += 1
+                    continue
+
+                # Duplicates are logged and skipped, so they are not double-counted
+                if record.unique_key in self.records:
+                    self.duplicates.append(record.unique_key)
+                    continue
+                self.records[record.unique_key] = record
+
+                if record.unparseable_date:
+                    self.unparseable_dates.append(record.unique_key)
+                if record.closed_before_created:
+                    self.closed_before_created.append(record.unique_key)
+                if record.closed_without_date:
+                    self.closed_without_date.append(record.unique_key)
+
+    @staticmethod
+    def status_summary(records: List[ServiceRequest]) -> Dict[str, Counter]:
+        """Counts records per status group and per raw status value."""
+        groups = Counter(r.status_group for r in records)
+        raw = Counter(r.status or '(empty)' for r in records)
+        return {'groups': groups, 'raw': raw}
+
+    def filter_records(self, agency: Optional[str] = None, problem_type: Optional[str] = None,
+                       status: Optional[str] = None) -> List[ServiceRequest]:
+        """Returns records matching all given filters (case-insensitive)."""
+        def matches(value: Optional[str], wanted: Optional[str]) -> bool:
+            return wanted is None or (value or '').lower() == wanted.lower()
+
+        return [
+            r for r in self.records.values()
+            if matches(r.agency, agency)
+            and matches(r.complaint_type, problem_type)
+            and matches(r.status, status)
+        ]
+
+    def unique_values(self, attr_name: str) -> List[str]:
+        return sorted({getattr(r, attr_name) for r in self.records.values() if getattr(r, attr_name)})
+
+    def export_clean_csv(self, records_to_export: List[ServiceRequest], output_filename: str):
+        """Exports filtered and cleaned records to a new CSV file."""
+        # Drop records with malformed timestamps (duplicates are already removed by the dict index)
+        clean_records = [r for r in records_to_export if not r.is_malformed_date]
+
+        if not clean_records:
+            print("No clean records to export.")
+            return
+
+        fieldnames = ['unique_key', 'agency', 'complaint_type', 'borough', 'status', 'created_date', 'closed_date']
+
+        with open(output_filename, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for r in clean_records:
+                writer.writerow({
+                    'unique_key': r.unique_key,
+                    'agency': r.agency,
+                    'complaint_type': r.complaint_type,
+                    'borough': r.borough,
+                    'status': r.status,
+                    'created_date': r.created_date_str,
+                    'closed_date': r.closed_date_str
+                })
+        excluded = len(records_to_export) - len(clean_records)
+        print(f"[+] Exported {len(clean_records):,} clean records "
+              f"({excluded:,} excluded for malformed timestamps) to: {output_filename}")
+
+    def report_lines(self, selected: List[ServiceRequest], filter_desc: Optional[str]) -> List[str]:
+        """Builds the summary/quality report shared by the console and the text file."""
+        overall = self.status_summary(list(self.records.values()))
+        lines = [
+            "=== DATA QUALITY REPORT ===",
+            f"Source file                 : {self.filepath}",
+            f"Total unique records parsed : {len(self.records):,}",
+            f"Rows missing unique_key     : {self.missing_id_rows:,}",
+            f"Duplicate IDs found         : {len(self.duplicates):,}",
+            f"Unparseable timestamps      : {len(self.unparseable_dates):,}",
+            f"Closed before created       : {len(self.closed_before_created):,}",
+            f"Closed without closed_date  : {len(self.closed_without_date):,}",
+            "",
+            "=== STATUS REPORT (all records) ===",
+            *self._status_lines(overall),
+        ]
+
+        if filter_desc:
+            filtered = self.status_summary(selected)
+            lines += [
+                "",
+                "=== FILTER RESULTS ===",
+                f"Filter applied              : {filter_desc}",
+                f"Records matching filter     : {len(selected):,}",
+                *self._status_lines(filtered),
+            ]
+        return lines
+
+    @staticmethod
+    def _status_lines(summary: Dict[str, Counter]) -> List[str]:
+        groups, raw = summary['groups'], summary['raw']
+        lines = [
+            f"Open records                : {groups['open']:,}",
+            f"Closed records              : {groups['closed']:,}",
+            f"Missing-status records      : {groups['missing']:,}",
+            "  Breakdown by raw status:",
+        ]
+        lines += [f"    {status:<24}: {count:,}" for status, count in raw.most_common()]
+        return lines
+
+    def generate_quality_report(self, output_filename: str, selected: List[ServiceRequest],
+                                filter_desc: Optional[str]):
+        """Writes the summary/quality report plus the full lists of faulty IDs."""
+        issue_lists = [
+            ("DUPLICATE IDs", self.duplicates),
+            ("UNPARSEABLE TIMESTAMP IDs", self.unparseable_dates),
+            ("CLOSED-BEFORE-CREATED IDs", self.closed_before_created),
+            ("CLOSED-WITHOUT-CLOSED_DATE IDs", self.closed_without_date),
+        ]
+        with open(output_filename, mode='w', encoding='utf-8') as f:
+            f.write("\n".join(self.report_lines(selected, filter_desc)) + "\n")
+            for title, ids in issue_lists:
+                if ids:
+                    f.write(f"\n--- {title} ({len(ids):,}) ---\n")
+                    f.write("\n".join(ids) + "\n")
+        print(f"[+] Quality report saved to: {output_filename}")
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description="Parse, clean and filter NYC 311 service requests.")
+    p.add_argument('--input', default=DEFAULT_FILEPATH, help="Path to the raw 311 CSV file")
+    p.add_argument('--agency', help="Filter by agency, e.g. DSNY")
+    p.add_argument('--problem-type', help='Filter by complaint type, e.g. "Abandoned Bike"')
+    p.add_argument('--status', help="Filter by raw status value, e.g. Closed")
+    p.add_argument('--list', choices=['agency', 'problem-type', 'status'],
+                   help="Print available values for a column and exit")
+    p.add_argument('--interactive', action='store_true',
+                   help="Choose a filter from a menu instead of using flags")
+    return p
+
+
+def interactive_filter(index: RequestIndex) -> Dict[str, str]:
+    """Menu-driven fallback for choosing a single filter."""
+    # lstrip BOM: PowerShell prepends one when piping input
+    wants_filter = input("\nDo you want to apply a filter? (y/n): ").lstrip('﻿').strip().lower()
+    if wants_filter != 'y':
+        return {}
+
+    attr_map = {
+        '1': ('complaint_type', 'problem_type', 'Problem / Complaint Type'),
+        '2': ('agency', 'agency', 'Agency'),
+        '3': ('status', 'status', 'Status'),
+    }
+    print("\nSelect a column to filter by:")
+    print("1. problem (complaint_type)")
+    print("2. agency")
+    print("3. status")
+    col_choice = input("Enter choice (1-3): ").strip()
+    if col_choice not in attr_map:
+        print("Invalid column choice. Proceeding without filters.")
+        return {}
+
+    attr_name, key, display_name = attr_map[col_choice]
+    values = index.unique_values(attr_name)
+    print(f"\nAvailable {display_name}s:")
+    for i, val in enumerate(values, 1):
+        print(f"{i}. {val}")
+
+    try:
+        val_idx = int(input(f"Enter choice (1-{len(values)}): ").strip()) - 1
+    except ValueError:
+        print("Invalid input format. Proceeding without filters.")
+        return {}
+    if not 0 <= val_idx < len(values):
+        print("Invalid selection. Proceeding without filters.")
+        return {}
+    return {key: values[val_idx]}
+
+
+def main():
+    args = build_arg_parser().parse_args()
+
+    print(f"Loading data from {args.input}...")
+    index = RequestIndex(args.input)
+    try:
+        index.load_and_index()
+    except FileNotFoundError:
+        print(f"Error: Could not find the file at {args.input}.")
+        sys.exit(1)
+
+    list_attrs = {'agency': 'agency', 'problem-type': 'complaint_type', 'status': 'status'}
+    if args.list:
+        for val in index.unique_values(list_attrs[args.list]):
+            print(val)
+        return
+
+    filters = {k: v for k, v in
+               {'agency': args.agency, 'problem_type': args.problem_type, 'status': args.status}.items() if v}
+    if args.interactive:
+        filters = interactive_filter(index)
+
+    if filters:
+        selected = index.filter_records(**filters)
+        filter_desc = ", ".join(f"{k} = '{v}'" for k, v in filters.items())
+        if not selected:
+            print(f"Warning: no records match {filter_desc}. Use --list to see valid values.")
+    else:
+        selected = list(index.records.values())
+        filter_desc = None
+
+    print()
+    print("\n".join(index.report_lines(selected, filter_desc)))
+
+    print("\n--- EXPORTING FILES ---")
+    csv_filename = "cleaned_data.csv"
+    if filters:
+        safe_name = "_".join(f"{k}_{v}" for k, v in filters.items())
+        safe_name = "".join(c if c.isalnum() else "_" for c in safe_name.lower()).strip("_")
+        csv_filename = f"cleaned_data_{safe_name}.csv"
+
+    # Replace previous outputs: remove old cleaned CSVs before writing the new one
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    for old_file in os.listdir(OUTPUT_DIR):
+        if old_file.startswith("cleaned_data") and old_file.endswith(".csv"):
+            os.remove(os.path.join(OUTPUT_DIR, old_file))
+
+    index.export_clean_csv(selected, os.path.join(OUTPUT_DIR, csv_filename))
+    index.generate_quality_report(os.path.join(OUTPUT_DIR, "quality_report.txt"), selected, filter_desc)
+
+
+if __name__ == "__main__":
+    main()

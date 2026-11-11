@@ -1,0 +1,37 @@
+=== DATA QUALITY REPORT ===
+Source file                 : D:\city_service_analytic\portal_data_setup\data\nyc311_brooklyn_2026-07.csv
+Total unique records parsed : 104,867
+Rows missing unique_key     : 0
+Duplicate IDs found         : 0
+Unparseable timestamps      : 0
+Closed before created       : 11
+Closed without closed_date  : 1
+
+=== STATUS REPORT (all records) ===
+Open records                : 5,795
+Closed records              : 99,069
+Missing-status records      : 3
+  Breakdown by raw status:
+    Closed                  : 99,069
+    In Progress             : 3,808
+    Open                    : 1,496
+    Assigned                : 429
+    Started                 : 41
+    Pending                 : 21
+    Unspecified             : 3
+
+--- CLOSED-BEFORE-CREATED IDs (11) ---
+69575397
+69675937
+69666599
+69675978
+69746493
+69761974
+69824885
+69856055
+69893954
+69902457
+69898812
+
+--- CLOSED-WITHOUT-CLOSED_DATE IDs (1) ---
+69853990
