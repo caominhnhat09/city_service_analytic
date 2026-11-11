@@ -116,7 +116,15 @@ The clean CSV is named after the filter, for example:
 | `--agency DSNY`                     | `cleaned_data_agency_dsny.csv`                   |
 | `--problem-type "Abandoned Bike"`   | `cleaned_data_problem_type_abandoned_bike.csv`   |
 
-Columns: `unique_key, agency, complaint_type, borough, status, created_date, closed_date`.
+Columns: every column from the raw file, in the original order, with snake_case headers
+(e.g. `unique_key`, `created_date`). The parser accepts both namings for these columns and
+always exports them under the snake_case name:
+
+| Raw file header                        | Exported as      |
+|:---------------------------------------|:-----------------|
+| `Problem (formerly Complaint Type)`    | `complaint_type` |
+| `Problem detail (formerly Descriptor)` | `descriptor`     |
+| `Additional details`                   | `descriptor_2`   |
 
 **For the analytics part:** run the parser with no filter and read `parser/data/cleaned_data.csv`.
 It contains every unique record with valid timestamps (104,856 rows for the July 2026 Brooklyn slice).
