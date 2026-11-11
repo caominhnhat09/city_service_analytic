@@ -1,6 +1,7 @@
 import argparse
 import csv
 import os
+import re
 import sys
 from collections import Counter
 from datetime import datetime
@@ -24,10 +25,32 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 CLOSED_STATUSES = {'Closed'}
 MISSING_STATUSES = {'', 'Unspecified'}
 
+# Some portal exports use display names for these columns. Headers are normalized
+# (lowercase, non-alphanumerics -> '_') and then mapped to the target names below
+# (complaint_type, descriptor, descriptor_2), so either naming parses and exports the same way.
+COLUMN_ALIASES = {
+    'complaint_type': {'complaint_type', 'problem', 'problem_formerly_complaint_type'},
+    'descriptor': {'descriptor', 'problem_detail', 'problem_detail_formerly_descriptor'},
+    'descriptor_2': {'descriptor_2', 'additional_details'},
+}
+_ALIAS_LOOKUP = {alias: canonical for canonical, aliases in COLUMN_ALIASES.items() for alias in aliases}
+
+
+def normalize_header(name: str) -> str:
+    return re.sub(r'[^a-z0-9]+', '_', name.strip().lower()).strip('_')
+
+
+def canonical_column(name: str) -> str:
+    """Maps a raw CSV header (old or new naming) to its canonical name."""
+    norm = normalize_header(name)
+    return _ALIAS_LOOKUP.get(norm, norm)
+
 
 class ServiceRequest:
     """OOP representation of a single NYC 311 service request record."""
     def __init__(self, row: Dict[str, Optional[str]]):
+        # Full raw row (canonical column names), kept so the export can include every column
+        self.raw = row
         self.unique_key = (row.get('unique_key') or '').strip()
         self.agency = row.get('agency')
         self.complaint_type = row.get('complaint_type')
@@ -77,6 +100,8 @@ class RequestIndex:
     def __init__(self, filepath: str):
         self.filepath = filepath
         self.records: Dict[str, ServiceRequest] = {}
+        # Canonical column names from the raw file, in their original order
+        self.columns: List[str] = []
 
         # Quality report trackers
         self.duplicates: List[str] = []
@@ -89,6 +114,10 @@ class RequestIndex:
         """Reads the CSV file, indexes unique records, and logs quality issues."""
         with open(self.filepath, mode='r', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)
+            # Rename headers once: "Problem (formerly Complaint Type)" -> complaint_type, etc.
+            reader.fieldnames = [canonical_column(h) for h in (reader.fieldnames or [])]
+            # Valid columns: non-blank headers, first occurrence of each name
+            self.columns = list(dict.fromkeys(h for h in reader.fieldnames if h))
             for row in reader:
                 record = ServiceRequest(row)
 
@@ -141,21 +170,17 @@ class RequestIndex:
             print("No clean records to export.")
             return
 
-        fieldnames = ['unique_key', 'agency', 'complaint_type', 'borough', 'status', 'created_date', 'closed_date']
-
+        # Every valid column from the raw file, exported under its target snake_case name
+        # (portal display names like "Problem (formerly Complaint Type)" become complaint_type)
         with open(output_filename, mode='w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer = csv.DictWriter(f, fieldnames=self.columns, extrasaction='ignore')
             writer.writeheader()
             for r in clean_records:
-                writer.writerow({
-                    'unique_key': r.unique_key,
-                    'agency': r.agency,
-                    'complaint_type': r.complaint_type,
-                    'borough': r.borough,
-                    'status': r.status,
-                    'created_date': r.created_date_str,
-                    'closed_date': r.closed_date_str
-                })
+                row = {col: r.raw.get(col) for col in self.columns}
+                # Use the whitespace-trimmed values the parser validated
+                row['unique_key'] = r.unique_key
+                row['status'] = r.status
+                writer.writerow(row)
         excluded = len(records_to_export) - len(clean_records)
         print(f"[+] Exported {len(clean_records):,} clean records "
               f"({excluded:,} excluded for malformed timestamps) to: {output_filename}")
