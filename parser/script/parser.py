@@ -7,6 +7,7 @@ from collections import Counter
 from datetime import datetime
 from typing import Dict, List, Optional
 
+
 # Paths are resolved from this file's location, so the script works from any
 # working directory and on any OS.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -18,7 +19,13 @@ DEFAULT_FILEPATH = os.path.join(PROJECT_ROOT, "portal_data_setup", "data", "nyc3
 # Output folder for cleaned data and quality report: parser/data
 OUTPUT_DIR = os.path.join(PARSER_DIR, "data")
 
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
+DATE_FORMATS = (
+    '%Y-%m-%dT%H:%M:%S.%f',   # API export
+    '%Y-%m-%dT%H:%M:%S',      # API export without fractional seconds
+    '%m/%d/%Y %I:%M:%S %p',   # portal (web) export
+)
+
+OUTPUT_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 
 # Status grouping. Anything that is not Closed and not missing counts as open
 # (Open, In Progress, Assigned, Started, Pending, ...).
@@ -34,6 +41,21 @@ COLUMN_ALIASES = {
     'descriptor_2': {'descriptor_2', 'additional_details'},
 }
 _ALIAS_LOOKUP = {alias: canonical for canonical, aliases in COLUMN_ALIASES.items() for alias in aliases}
+
+DATE_COLUMNS = ('created_date', 'closed_date', 'due_date', 'resolution_action_updated_date')
+
+
+def normalize_date_text(value: Optional[str]) -> str:
+    """Rewrites a date string in the API style; returns it unchanged if it cannot be parsed."""
+    if not value or not value.strip():
+        return ''
+    dt = ServiceRequest._parse_date(value)
+    return format_date(dt) if dt else value
+
+
+def format_date(dt: Optional[datetime]) -> str:
+    """Writes a datetime in the API style, e.g. 2026-07-01T00:00:13.000."""
+    return dt.strftime(OUTPUT_DATE_FORMAT)[:-3] if dt else ''
 
 
 def normalize_header(name: str) -> str:
@@ -88,11 +110,12 @@ class ServiceRequest:
     def _parse_date(date_str: Optional[str]) -> Optional[datetime]:
         if not date_str:
             return None
-        try:
-            # Matches the ISO 8601 format used in the dataset
-            return datetime.strptime(date_str, DATE_FORMAT)
-        except ValueError:
-            return None
+        for fmt in DATE_FORMATS:
+            try:
+                return datetime.strptime(date_str.strip(), fmt)
+            except ValueError:
+                continue
+        return None
 
 
 class RequestIndex:
@@ -180,6 +203,9 @@ class RequestIndex:
                 # Use the whitespace-trimmed values the parser validated
                 row['unique_key'] = r.unique_key
                 row['status'] = r.status
+                for col in DATE_COLUMNS:
+                    if col in row:
+                        row[col] = normalize_date_text(row[col])
                 writer.writerow(row)
         excluded = len(records_to_export) - len(clean_records)
         print(f"[+] Exported {len(clean_records):,} clean records "
