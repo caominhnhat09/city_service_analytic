@@ -72,8 +72,8 @@ python analytics/statistics.py
 python analytics/visualizations.py
 ```
 
-- **Statistics:** Ranks requests by complaint type and agency, reports open/closed/missing statuses, compares agency performance, and computes closure-time metrics using only valid timestamps.
-- **Visualizations:** Generates plots for complaint distributions, agency workloads, closure-time comparisons, daily trends, and status breakdowns.
+- **Statistics:** Counts and ranks requests by complaint type and agency,  computes closure-time metrics using only valid timestamps.
+- **Visualizations:** Generates plots for complaint distributions, agency workloads, closure-time and request comparisons, daily trends.
 
 Full guide: [`analytics/README.md`](analytics/README.md)
 

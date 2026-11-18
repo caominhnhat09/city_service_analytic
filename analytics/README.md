@@ -19,5 +19,5 @@ python analytics/visualizations.py
 
 ## Outputs (`output/`)
 
-- **Reports:** `summary_report.txt`, `complaint_type_counts.csv`, `agency_counts.csv`, `agency_comparison.csv`
-- **Plots:** `complaint_types.png`, `agencies.png`, `agency_request_comparison.png`, `agency_closure_time_comparison.png`, `daily_requests.png`, `status_distribution.png`
+- **Reports:** `complaint_type_counts.csv`, `agency_counts.csv`, `closure_time.txt`
+- **Plots:** `complaint_types.png`, `agencies.png`, `compare.png`, `daily_requests.png`
