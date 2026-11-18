@@ -64,7 +64,6 @@ Full guide: [`parser/README.md`](parser/README.md)
 
 
 
-... (analytics, validation should fill appropriately in README.MD later) ...
 
 
 

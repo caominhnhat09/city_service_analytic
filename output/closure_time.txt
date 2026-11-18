@@ -1,0 +1,15 @@
+NYC 311 ANALYTICS REPORT
+========================================
+
+Total records: 104856
+
+CLOSURE TIME (HOURS)
+count: 99555.00
+mean: 167.02
+median: 6.07
+variance: 138015.62
+std_dev: 371.50
+q1: 0.91
+q3: 121.42
+min: 0.00
+max: 2905.81
