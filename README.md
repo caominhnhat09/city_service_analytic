@@ -63,7 +63,19 @@ python parser/script/parser.py --list agency                   # show valid filt
 Full guide: [`parser/README.md`](parser/README.md)
 
 
+## Analytics & Visualization
 
+The analytics module computes summary statistics using NumPy and generates offline Matplotlib visualizations from the parsed dataset. All reports and figures are exported to `output/`.
+
+```
+python analytics/statistics.py
+python analytics/visualizations.py
+```
+
+- **Statistics:** Ranks requests by complaint type and agency, reports open/closed/missing statuses, compares agency performance, and computes closure-time metrics using only valid timestamps.
+- **Visualizations:** Generates plots for complaint distributions, agency workloads, closure-time comparisons, daily trends, and status breakdowns.
+
+Full guide: [`analytics/README.md`](analytics/README.md)
 
 
 
