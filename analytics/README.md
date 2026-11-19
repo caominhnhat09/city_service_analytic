@@ -17,6 +17,14 @@ python analytics/statistics.py
 python analytics/visualizations.py
 ```
 
+- **Count and analyze closure time statistics by agency, complaint type:**
+
+```
+python analytics/statistics.py --agency NYPD
+python analytics/statistics.py --complaint-type "Noise - Residential"
+python analytics/statistics.py --agency NYPD --complaint-type "Illegal Parking"
+```
+
 ## Outputs (`output/`)
 
 - **Reports:** `complaint_type_counts.csv`, `agency_counts.csv`, `closure_time.txt`
