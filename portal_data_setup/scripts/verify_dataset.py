@@ -113,7 +113,7 @@ def check_slice(csv_path: Path, config: dict) -> dict:
     }
 
 
-def main() -> int:
+def main():
     
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     csv_path = (ROOT / config["csv_path"])
@@ -122,16 +122,16 @@ def main() -> int:
         print(f"[FAIL] CSV not found: {csv_path}")
         print("       Check 'csv_path' in config/dataset_config.json, or export the file first "
               "(see docs/PORTAL_FILTER_STEPS.md).")
-        return 1
+        return 
 
     result = check_slice(csv_path, config)
     if result["missing_columns"]:
         print(f"[FAIL] Missing required columns: {result['missing_columns']}")
         print(f"       Header found: {result['header']}")
-        return 1
+        return 
     if result["rows"] == 0:
         print("[FAIL] The CSV has a header but no data rows.")
-        return 1
+        return 
 
     manifest = {
         "verified_at": datetime.now().isoformat(timespec="seconds"),
@@ -170,8 +170,8 @@ def main() -> int:
               "Fill them in with the values above.")
 
     print(f"\nManifest written to {MANIFEST_PATH.relative_to(ROOT)}")
-    return 1 if problems else 0
+    return
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

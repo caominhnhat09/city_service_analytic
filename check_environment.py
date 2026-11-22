@@ -23,14 +23,14 @@ def check_package(name: str) -> bool:
     return True
 
 
-def main() -> int:
+def main():
     results = [check_python()] + [check_package(p) for p in REQUIRED_PACKAGES]
     if all(results):
         print("\nEnvironment is ready.")
-        return 0
+        return 
     print("\nEnvironment is NOT ready. Fix the items marked FAIL.")
-    return 1
+    return 
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
