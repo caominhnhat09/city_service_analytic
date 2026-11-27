@@ -8,7 +8,7 @@ clean CSV for the analytics part to use.
 
 | File                      | What it is              |
 |:--------------------------|:------------------------|
-| `script/parser.py`        | The parser script       |
+| `script/parser_indexing.py` | The parser script       |
 | `data/cleaned_data*.csv`  | Clean data export       |
 | `data/quality_report.txt` | Status + quality report |
 
@@ -50,24 +50,24 @@ The commands below can be run from any folder; paths are resolved from the scrip
 **Process the whole dataset (no filter):**
 
 ```
-python parser/script/parser.py
+python parser/script/parser_indexing.py
 ```
 
 **See which values you can filter by:**
 
 ```
-python parser/script/parser.py --list agency
-python parser/script/parser.py --list problem-type
-python parser/script/parser.py --list status
+python parser/script/parser_indexing.py --list agency
+python parser/script/parser_indexing.py --list problem-type
+python parser/script/parser_indexing.py --list status
 ```
 
 **Filter by agency, problem type or status** (matching ignores upper/lower case; filters can be combined):
 
 ```
-python parser/script/parser.py --agency DSNY
-python parser/script/parser.py --problem-type "Abandoned Bike"
-python parser/script/parser.py --agency DSNY --problem-type "Abandoned Bike"
-python parser/script/parser.py --status "In Progress"
+python parser/script/parser_indexing.py --agency DSNY
+python parser/script/parser_indexing.py --problem-type "Abandoned Bike"
+python parser/script/parser_indexing.py --agency DSNY --problem-type "Abandoned Bike"
+python parser/script/parser_indexing.py --status "In Progress"
 ```
 
 Put values containing spaces in quotes. If a filter matches nothing, the parser warns you; use `--list` to check spelling.
@@ -75,16 +75,16 @@ Put values containing spaces in quotes. If a filter matches nothing, the parser 
 **Choose a filter from a menu instead of flags:**
 
 ```
-python parser/script/parser.py --interactive
+python parser/script/parser_indexing.py --interactive
 ```
 
 **Use a different input file:**
 
 ```
-python parser/script/parser.py --input path/to/other.csv
+python parser/script/parser_indexing.py --input path/to/other.csv
 ```
 
-Run `python parser/script/parser.py --help` for the full option list.
+Run `python parser/script/parser_indexing.py --help` for the full option list.
 
 ## Output
 
@@ -132,7 +132,7 @@ It contains every unique record with valid timestamps (104,856 rows for the July
 ## Using it from Python
 
 ```python
-from parser import RequestIndex   # run from parser/script/, or add it to sys.path
+from parser_indexing import RequestIndex   # run from parser/script/, or add it to sys.path
 
 index = RequestIndex("portal_data_setup/data/nyc311_brooklyn_2026-07.csv")
 index.load_and_index()
