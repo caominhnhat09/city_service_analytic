@@ -54,10 +54,10 @@ missing-status counts, flags duplicate IDs and malformed timestamps, and exports
 plus a quality report to `parser/data/`.
 
 ```
-python parser/script/parser.py                                 # whole dataset
-python parser/script/parser.py --agency DSNY                   # filter by agency
-python parser/script/parser.py --problem-type "Abandoned Bike" # filter by problem type
-python parser/script/parser.py --list agency                   # show valid filter values
+python parser/script/parser_indexing.py                                 # whole dataset
+python parser/script/parser_indexing.py --agency DSNY                   # filter by agency
+python parser/script/parser_indexing.py --problem-type "Abandoned Bike" # filter by problem type
+python parser/script/parser_indexing.py --list agency                   # show valid filter values
 ```
 
 Full guide: [`parser/README.md`](parser/README.md)
